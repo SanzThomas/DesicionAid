@@ -1,0 +1,10 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Accueil";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Bienvenue sur notre projet d'analyse du mariage stable</h1>
+    <a asp-controller="Main" asp-action="RandomPreferencies" class="btn btn-outline-primary" title="Lance l'algorithme avec des préférences aléatoires.">Préférences aléatoires</a>
+</div>

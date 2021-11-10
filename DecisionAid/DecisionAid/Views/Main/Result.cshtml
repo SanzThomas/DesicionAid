@@ -1,0 +1,82 @@
+﻿@using DecisionAid.Models
+
+@model MatchesModel
+
+@{
+    ViewData["Title"] = "Résultat";
+}
+
+<div class="row">
+    <div class="col-6">
+        <table>
+            <tr>
+                <th>Etudiants</th>
+
+                @for (var i = 1; i <= Model.Candidacies.Establishments.Count; i++)
+                {
+                    <th>Ordre : @i</th>
+                }
+
+            </tr>
+
+            @foreach (var student in Model.Candidacies.Students)
+            {
+                <tr>
+                    <td>@student.Name</td>
+
+                    @foreach (var preferency in student.Preferencies)
+                    {
+                        <td>@preferency.Name</td>
+                    }
+
+                </tr>
+            }
+
+        </table>
+    </div>
+
+    <div class="col-6">
+        <table>
+            <tr>
+                <th>Etablissements</th>
+
+                @for (var i = 1; i <= Model.Candidacies.Students.Count; i++)
+                {
+                    <th>Ordre : @i</th>
+                }
+
+            </tr>
+
+            @foreach (var establishment in Model.Candidacies.Establishments)
+            {
+                <tr>
+                    <td>@establishment.Name</td>
+
+                    @foreach (var preferency in establishment.Preferencies)
+                    {
+                        <td>@preferency.Name</td>
+                    }
+
+                </tr>
+            }
+
+        </table>
+    </div>
+</div>
+
+<table>
+    <tr>
+        <th>Etudiants</th>
+        <th>Etablissements</th>
+    </tr>
+
+    @foreach (var pair in Model.Matches)
+    {
+        <tr>
+            <td>@pair.Key.Name</td>
+            <td>@pair.Value.Name</td>
+
+        </tr>
+    }
+
+</table>
