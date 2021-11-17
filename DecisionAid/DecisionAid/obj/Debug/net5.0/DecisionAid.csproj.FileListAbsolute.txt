@@ -335,7 +335,6 @@ C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\Desici
 C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\obj\Debug\net5.0\DecisionAid.RazorAssemblyInfo.cache
 C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\obj\Debug\net5.0\DecisionAid.RazorAssemblyInfo.cs
 C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\obj\Debug\net5.0\staticwebassets\DecisionAid.StaticWebAssets.Manifest.cache
-C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\obj\Debug\net5.0\staticwebassets\DecisionAid.StaticWebAssets.xml
 C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\obj\Debug\net5.0\scopedcss\bundle\DecisionAid.styles.css
 C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\obj\Debug\net5.0\DecisionAid.TagHelpers.input.cache
 C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\obj\Debug\net5.0\DecisionAid.TagHelpers.output.cache
@@ -357,3 +356,7 @@ C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\Desici
 C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\obj\Debug\net5.0\DecisionAid.genruntimeconfig.cache
 C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\obj\Debug\net5.0\Razor\Views\Main\Result.cshtml.g.cs
 C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\bin\Debug\net5.0\Newtonsoft.Json.dll
+C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\obj\Debug\net5.0\Razor\Views\Main\_ViewStart.cshtml.g.cs
+C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\obj\Debug\net5.0\Razor\Views\Main\GenerateCandidacies.cshtml.g.cs
+C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\obj\Debug\net5.0\Razor\Views\Main\_ViewImports.cshtml.g.cs
+C:\Users\tsanz\Documents\Mes documents\Cours\Master 2\Aide à la decision\DesicionAid\DecisionAid\DecisionAid\bin\Debug\net5.0\libman.json

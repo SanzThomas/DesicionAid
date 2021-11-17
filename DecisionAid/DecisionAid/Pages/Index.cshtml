@@ -6,5 +6,13 @@
 
 <div class="text-center">
     <h1 class="display-4">Bienvenue sur notre projet d'analyse du mariage stable</h1>
-    <a asp-controller="Main" asp-action="RandomPreferencies" class="btn btn-outline-primary" title="Lance l'algorithme avec des préférences aléatoires.">Préférences aléatoires</a>
+
+    <form asp-controller="Main" asp-action="GenerateCandidacies" method="post" id="choose-count">
+        <div class="form-group">
+            <label for="count">Choisissez combien d'étudiants et d'établissements vous souhaitez générer</label>
+            <input type="number" class="form-control col-1 mx-auto" id="count" name="count" value="5" />
+        </div>
+        <button class="btn btn-outline-primary" type="submit">Valider</button>
+    </form>
+    <div id="preferencies-content"></div>
 </div>
