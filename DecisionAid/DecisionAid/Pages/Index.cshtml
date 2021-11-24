@@ -16,3 +16,105 @@
     </form>
     <div id="preferencies-content"></div>
 </div>
+
+@section Scripts
+{
+
+<script type="text/javascript">
+
+    var buildPreferencies = function () {
+
+        var allStudents = $(".students-items.sortable");
+        var allEstablishments = $(".establishments-items.sortable");
+
+        var data = {
+            students: [allStudents.length],
+            establishments: [allEstablishments.length]
+        };
+
+        allStudents.each(function (i, item) {
+
+            var id = $(item).prev("h5").data("id");
+            var name = $(item).prev("h5").html();
+
+            var preferencyOrders = $(item).children();
+            var preferencies = [preferencyOrders.length];
+
+            preferencyOrders.each(function (j, preferency) {
+
+                var preferencyId = $(preferency).data("id");
+                var preferencyName = $(preferency).html();
+
+                preferencies[j] = { id: preferencyId, name: preferencyName };
+            });
+
+            data.students[i] = { id, name, preferencies };
+        });
+
+        allEstablishments.each(function (i, item) {
+
+            var id = $(item).prev("h5").data("id");
+            var name = $(item).prev("h5").html();
+
+            var preferencyOrders = $(item).children();
+            var preferencies = [preferencyOrders.length];
+
+            preferencyOrders.each(function (j, preferency) {
+
+                var preferencyId = $(preferency).data("id");
+                var preferencyName = $(preferency).html();
+
+                preferencies[j] = { id: preferencyId, name: preferencyName };
+            });
+
+            data.establishments[i] = { id, name, preferencies };
+        });
+
+        $.ajax({
+            url: "@Url.Action("InitModel", "Main")",
+            method: "POST",
+            async: false
+        });
+
+        for (var i = 0; i < data.students.length; i++) {
+
+            console.log("for");
+
+            $.ajax({
+                url: "@Url.Action("BuildModel", "Main")",
+                method: "POST",
+                data: {
+                    student: data.students[i],
+                    establishment: data.establishments[i]
+                },
+                async: false
+            });
+        } 
+    }
+
+    var generateResultsByStudents = function (e) {
+        e.preventDefault();
+
+        buildPreferencies();
+
+        $("#generate-solution").submit();
+    }
+
+    var generateResultsByEstablishments = function (e) {
+        e.preventDefault();
+
+        buildPreferencies();
+
+        $("#generate-solution").prop("action", $("#generate-solution").prop("action").replace("GenerateSolutionByStudents", "GenerateSolutionByEstablishments"));
+        $("#generate-solution").submit();
+    }
+
+    $(document).ready(function () {
+
+        // Evénements
+        $(document).on("click", "#validate-preferencies-by-student", generateResultsByStudents);
+        $(document).on("click", "#validate-preferencies-by-establishment", generateResultsByEstablishments);
+    });
+
+</script>
+}

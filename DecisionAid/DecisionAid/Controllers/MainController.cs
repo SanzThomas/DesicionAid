@@ -12,32 +12,72 @@ namespace DecisionAid.Controllers
     public class MainController : Controller
     {
         /// <summary>
-        /// Lance l'algorithme avec des préférences aléatoires.
+        /// Un modèle utilisé pour reconstruire les condidatures et leurs préférences.
+        /// </summary>
+        private static CandidaciesModel TemporaryModel { get; set; }
+
+        /// <summary>
+        /// Construit un modèle partiel, étape par étape.
+        /// </summary>
+        /// <param name="student">Un étudiant.</param>
+        /// <param name="establishment">Un établissement.</param>
+        [HttpPost]
+        public void BuildModel(StudentModel student, EstablishmentModel establishment)
+        {
+            TemporaryModel.Students.Add(student);
+            TemporaryModel.Establishments.Add(establishment);
+        }
+
+        /// <summary>
+        /// Génère une solution en donnant la priorité aux étudiants.
         /// </summary>
         [HttpPost]
-        public ActionResult GenerateSolution(List<StudentModel> students, List<EstablishmentModel> establishments)
+        public ActionResult GenerateSolutionByStudents()
         {
-            var model = UpdatePreferencies(students, establishments);
+            var model = UpdatePreferencies();
 
             var result = CalculateMatchesByStudents(model);
 
             GetStudentSatisfaction(result);
             GetEstablishmentSatisfaction(result);
 
-            //return Json(new { model });
+            return View("Result", result);
+        }
+
+        /// <summary>
+        /// Génère une solution en donnant la priorité aux établissements.
+        /// </summary>
+        [HttpPost]
+        public ActionResult GenerateSolutionByEstablishments()
+        {
+            var model = UpdatePreferencies();
+            var result = CalculateMatchesByEstablishment(model);
+
+            // Ordonne les étudiants et les établissements
+            result.Candidacies.Students = result.Candidacies.Students.OrderBy(e => e.Name).ToList();
+            result.Candidacies.Establishments = result.Candidacies.Establishments.OrderBy(e => e.Name).ToList();
+
+            GetStudentSatisfaction(result);
+            GetEstablishmentSatisfaction(result);
 
             return View("Result", result);
         }
 
+        /// <summary>
+        /// Génère des candidatures.
+        /// </summary>
+        /// <param name="count">Le nombre de candidats.</param>
         [HttpPost]
         public ActionResult GenerateCandidacies(int count)
         {
+            // Crée un modèle
             var model = new CandidaciesModel
             {
                 Students = new List<StudentModel>(),
                 Establishments = new List<EstablishmentModel>()
             };
 
+            // Remplit ce modèle
             for (int i = 1; i <= count; i++)
             {
                 AddStudent(model, "Etudiant " + i);
@@ -49,6 +89,11 @@ namespace DecisionAid.Controllers
             return PartialView(model);
         }
 
+        /// <summary>
+        /// Ajoute un étudiant au modèle.
+        /// </summary>
+        /// <param name="model">Le modèle.</param>
+        /// <param name="name">L' nom de l'étudiant.</param>
         private static void AddStudent(CandidaciesModel model, string name)
         {
             model.Students.Add(new StudentModel
@@ -59,6 +104,11 @@ namespace DecisionAid.Controllers
             });
         }
 
+        /// <summary>
+        /// Ajoute un établissement au modèle.
+        /// </summary>
+        /// <param name="model">Le modèle.</param>
+        /// <param name="name">L' nom de l'établissement.</param>
         private static void AddEstablishment(CandidaciesModel model, string name)
         {
             model.Establishments.Add(new EstablishmentModel
@@ -69,8 +119,13 @@ namespace DecisionAid.Controllers
             });
         }
 
+        /// <summary>
+        /// Ajoute des préférences aléatoires entre les étudiants et les établissements.
+        /// </summary>
+        /// <param name="model">Le modèle.</param>
         private static void AddRandomPreferencies(CandidaciesModel model)
         {
+            // Ajoute les préférences aléatoires de chaque étudiant
             foreach (StudentModel student in model.Students)
             {
                 var rand = new Random();
@@ -86,6 +141,7 @@ namespace DecisionAid.Controllers
                 }
             }
 
+            // Ajoute les préférences aléatoires de chaque établissement
             foreach (EstablishmentModel establishment in model.Establishments)
             {
                 var rand = new Random();
@@ -102,35 +158,57 @@ namespace DecisionAid.Controllers
             }
         }
 
-        private static CandidaciesModel UpdatePreferencies(List<StudentModel> students, List<EstablishmentModel> establishments)
+        /// <summary>
+        /// Initialise le modèle provisoire.
+        /// </summary>
+        [HttpPost]
+        public void InitModel()
         {
+            TemporaryModel = new CandidaciesModel
+            {
+                Students = new List<StudentModel>(),
+                Establishments = new List<EstablishmentModel>()
+            };
+        }
+
+        /// <summary>
+        /// Met à jour les préférences en fonction du modèle provisoire.
+        /// </summary>
+        /// <returns>Le modèle reconstruit.</returns>
+        public CandidaciesModel UpdatePreferencies()
+        {
+            // Crée un modèle
             var model = new CandidaciesModel
             {
                 Students = new List<StudentModel>(),
                 Establishments = new List<EstablishmentModel>()
             };
 
-            foreach (var student in students)
+            // Ajoute les étudiants
+            foreach (var student in TemporaryModel.Students)
             {
                 var preferencyIds = new List<Guid>(student.Preferencies.Select(p => p.Id));
 
+                // Ajoute les préférences d'un étudiant
                 student.Preferencies.Clear();
                 foreach (var preferencyId in preferencyIds)
                 {
-                    student.Preferencies.Add(establishments.First(e => e.Id == preferencyId));
+                    student.Preferencies.Add(TemporaryModel.Establishments.First(e => e.Id == preferencyId));
                 }
-                
+
                 model.Students.Add(student);
             }
 
-            foreach (var establishment in establishments)
+            // Ajoute les établissements
+            foreach (var establishment in TemporaryModel.Establishments)
             {
                 var preferencyIds = new List<Guid>(establishment.Preferencies.Select(p => p.Id));
 
+                // Ajoute les préférences d'un établissement
                 establishment.Preferencies.Clear();
                 foreach (var preferencyId in preferencyIds)
                 {
-                    establishment.Preferencies.Add(students.First(e => e.Id == preferencyId));
+                    establishment.Preferencies.Add(TemporaryModel.Students.First(e => e.Id == preferencyId));
                 }
 
                 model.Establishments.Add(establishment);
@@ -139,6 +217,11 @@ namespace DecisionAid.Controllers
             return model;
         }
 
+        /// <summary>
+        /// Calcule les correspondances en donnant la priorité aux étudiants.
+        /// </summary>
+        /// <param name="model">Le modèle.</param>
+        /// <returns>Le modèle de correspondances.</returns>
         private static MatchesModel CalculateMatchesByStudents(CandidaciesModel model)
         {
             var freeStudents = new List<StudentModel>(model.Students);
@@ -154,6 +237,7 @@ namespace DecisionAid.Controllers
             {
                 var propositions = new List<KeyValuePair<StudentModel, EstablishmentModel>>();
                 
+                // Chaque étudiant propose son premier choix
                 foreach (var freeStudent in freeStudents)
                 {
                     var bestChoice = freeStudent.Preferencies.FirstOrDefault();
@@ -162,6 +246,7 @@ namespace DecisionAid.Controllers
                     propositions.Add(new KeyValuePair<StudentModel, EstablishmentModel>(freeStudent, bestChoice));
                 }
 
+                // Chaque établissement choisit l'étudiant qui lui convient le mieux.
                 foreach (var establishment in model.Establishments)
                 {
                     var bestOrder = -1;
@@ -180,6 +265,7 @@ namespace DecisionAid.Controllers
                     {
                         var bestStudent = establishment.Preferencies.ElementAt(bestOrder);
 
+                        // Vérifie qu'un étudiant précédemment choisi n'est pas moins bien classé
                         if (matches.Matches.Any(m => m.Value == establishment))
                         {
                             var previousMatch = matches.Matches.First(m => m.Value == establishment);
@@ -206,6 +292,11 @@ namespace DecisionAid.Controllers
             return matches;
         }
 
+        /// <summary>
+        /// Calcule les correspondances en donnant la priorité aux établissements.
+        /// </summary>
+        /// <param name="model">Le modèle.</param>
+        /// <returns>Le modèle de correspondances.</returns>
         private static MatchesModel CalculateMatchesByEstablishment(CandidaciesModel model)
         {
             var freeEstablishments = new List<EstablishmentModel>(model.Establishments);
@@ -273,10 +364,15 @@ namespace DecisionAid.Controllers
             return matches;
         }
 
-        private static void GetStudentSatisfaction(MatchesModel model)  // TODO : Calculer la moyenne de chaque satisfaction
+        /// <summary>
+        /// Calcule la satisfaction des étudiants.
+        /// </summary>
+        /// <param name="model">Le modèle.</param>
+        private static void GetStudentSatisfaction(MatchesModel model)
         {
             model.StudentSatisfactions ??= new List<KeyValuePair<string, decimal>>();
             var maxCounter = model.Matches.Count;
+            var sum = 0m;
 
             foreach (var match in model.Matches)
             {
@@ -288,14 +384,24 @@ namespace DecisionAid.Controllers
                 decimal divise = moins / maxCounter;
                 decimal pourcent = divise * 100;
 
-                model.StudentSatisfactions.Add(new KeyValuePair<string, decimal>(student.Name, pourcent));
+                sum += pourcent;
+
+                model.StudentSatisfactions.Add(new KeyValuePair<string, decimal>(student.Name, Math.Round(pourcent, 2)));
             }
+
+            decimal average = sum / maxCounter;
+            model.StudentSatisfactions.Add(new KeyValuePair<string, decimal>("Moyenne", Math.Round(average, 2)));
         }
 
+        /// <summary>
+        /// Calcule la satisfaction de établissements.
+        /// </summary>
+        /// <param name="model">Le modèle.</param>
         private static void GetEstablishmentSatisfaction(MatchesModel model)
         {
             model.EstablishmentSatisfactions = new List<KeyValuePair<string, decimal>>();
             var maxCounter = model.Matches.Count;
+            var sum = 0m;
 
             foreach (var match in model.Matches)
             {
@@ -307,8 +413,13 @@ namespace DecisionAid.Controllers
                 decimal divise = moins / maxCounter;
                 decimal pourcent = divise * 100;
 
-                model.EstablishmentSatisfactions.Add(new KeyValuePair<string, decimal>(establishment.Name, pourcent));
+                sum += pourcent;
+
+                model.EstablishmentSatisfactions.Add(new KeyValuePair<string, decimal>(establishment.Name, Math.Round(pourcent, 2)));
             }
+
+            decimal average = sum / maxCounter;
+            model.EstablishmentSatisfactions.Add(new KeyValuePair<string, decimal>("Moyenne", Math.Round(average, 2)));
         }
     }
 }

@@ -1,46 +1,47 @@
 ﻿@model CandidaciesModel
 
+<form asp-controller="Main" asp-action="GenerateSolutionByStudents" method="post" id="generate-solution">
+    <h3 class="mt-4">Préférences des étudiants</h3>
 
-<h3 class="mt-4">Préférences des étudiants</h3>
+    <div class="row">
 
-<div class="row">
+        @foreach (var student in Model.Students)
+        {
+            <div class="col-4 mt-5">
+                <h5 data-id="@student.Id">@student.Name</h5>
+                <ul class="list-group students-items sortable">
 
-    @foreach (var student in Model.Students)
-    {
-        <div class="col-4 mt-5">
-            <h5 data-id="@student.Id">@student.Name</h5>
-            <ul class="list-group students-items sortable">
+                    @foreach (var preferency in student.Preferencies)
+                    {
+                        <li data-id="@preferency.Id" class="ui-state-default list-group-item">@preferency.Name</li>
+                    }
 
-                @foreach (var preferency in student.Preferencies)
-                {
-                    <li data-id="@preferency.Id" class="ui-state-default list-group-item">@preferency.Name</li>
-                }
+                </ul>
+            </div>
+        }
 
-            </ul>
-        </div>
-    }
+    </div>
 
-</div>
+    <h3 class="mt-4">Préférences des établissements</h3>
 
-<h3 class="mt-4">Préférences des établissements</h3>
+    <div class="row mb-3">
 
-<div class="row mb-3">
+        @foreach (var establishment in Model.Establishments)
+        {
+            <div class="col-4 mt-5">
+                <h5 data-id="@establishment.Id">@establishment.Name</h5>
+                <ul class="list-group establishments-items sortable">
 
-    @foreach (var establishment in Model.Establishments)
-    {
-        <div class="col-4 mt-5">
-            <h5 data-id="@establishment.Id">@establishment.Name</h5>
-            <ul class="list-group establishments-items sortable">
+                    @foreach (var preferency in establishment.Preferencies)
+                    {
+                        <li data-id="@preferency.Id" class="ui-state-default list-group-item">@preferency.Name</li>
+                    }
 
-                @foreach (var preferency in establishment.Preferencies)
-                {
-                    <li data-id="@preferency.Id" class="ui-state-default list-group-item">@preferency.Name</li>
-                }
+                </ul>
+            </div>
+        }
 
-            </ul>
-        </div>
-    }
-
-</div>
-
-<a asp-controller="Main" asp-action="GenerateSolution" id="validate-preferencies" class="btn btn-outline-primary" title="Lance l'algorithme avec des préférences choisies.">Valider</a>
+    </div>
+    <button type="submit" id="validate-preferencies-by-student" class="btn btn-outline-primary" title="Lance l'algorithme avec des préférences choisies.">Valider avec priorité aux étudiants</button>
+    <button type="submit" id="validate-preferencies-by-establishment" class="btn btn-outline-primary" title="Lance l'algorithme avec des préférences choisies.">Valider avec priorité aux établissements</button>
+</form>

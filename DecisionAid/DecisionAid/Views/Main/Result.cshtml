@@ -7,7 +7,7 @@
 }
 
 <div class="row">
-    <div class="col-6 table-responsive">
+    <div class="col-12 table-responsive mb-5">
         <table class="table table-bordered">
             <caption>Préférences des étudiants</caption>
             <tr>
@@ -23,11 +23,11 @@
             @foreach (var student in Model.Candidacies.Students)
             {
                 <tr>
-                    <td>@student.Name</td>
+                    <td nowrap>@student.Name</td>
 
                     @foreach (var preferency in student.Preferencies)
                     {
-                        <td>@preferency.Name</td>
+                        <td nowrap>@preferency.Name</td>
                     }
 
                 </tr>
@@ -36,7 +36,7 @@
         </table>
     </div>
 
-    <div class="col-6 table-responsive">
+    <div class="col-12 table-responsive mb-5">
         <table class="table table-bordered">
             <caption>Préférences des établissements</caption>
             <tr>
@@ -52,11 +52,11 @@
             @foreach (var establishment in Model.Candidacies.Establishments)
             {
                 <tr>
-                    <td>@establishment.Name</td>
+                    <td nowrap>@establishment.Name</td>
 
                     @foreach (var preferency in establishment.Preferencies)
                     {
-                        <td>@preferency.Name</td>
+                        <td nowrap>@preferency.Name</td>
                     }
 
                 </tr>
@@ -67,7 +67,7 @@
 </div>
 
 <div class="row">
-    <div class="col-4 table-responsive">
+    <div class="col-4 table-responsive mb-5">
         <table class="table table-bordered">
             <caption>Affectations</caption>
             <tr>
@@ -78,14 +78,14 @@
             @foreach (var pair in Model.Matches)
             {
                 <tr>
-                    <td>@pair.Key.Name</td>
-                    <td>@pair.Value.Name</td>
+                    <td nowrap>@pair.Key.Name</td>
+                    <td nowrap>@pair.Value.Name</td>
                 </tr>
             }
 
         </table>
     </div>
-    <div class="col-4 table-responsive">
+    <div class="col-4 table-responsive mb-5">
         <table class="table table-bordered">
             <caption>Satisfaction des étudiants</caption>
             <tr>
@@ -96,14 +96,14 @@
             @foreach (var pair in Model.StudentSatisfactions)
             {
                 <tr>
-                    <td>@pair.Key</td>
-                    <td>@pair.Value %</td>
+                    <td nowrap>@pair.Key</td>
+                    <td nowrap>@pair.Value %</td>
                 </tr>
             }
 
         </table>
     </div>
-    <div class="col-4 table-responsive">
+    <div class="col-4 table-responsive mb-5">
         <table class="table table-bordered">
             <caption>Satisfaction des établissements</caption>
             <tr>
@@ -114,8 +114,8 @@
             @foreach (var pair in Model.EstablishmentSatisfactions)
             {
                 <tr>
-                    <td>@pair.Key</td>
-                    <td>@pair.Value %</td>
+                    <td nowrap>@pair.Key</td>
+                    <td nowrap>@pair.Value %</td>
                 </tr>
             }
 
