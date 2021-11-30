@@ -16,6 +16,8 @@ namespace DecisionAid.Controllers
         /// </summary>
         private static CandidaciesModel TemporaryModel { get; set; }
 
+        private static int Capacity { get; set; }
+
         /// <summary>
         /// Construit un modèle partiel, étape par étape.
         /// </summary>
@@ -68,8 +70,10 @@ namespace DecisionAid.Controllers
         /// </summary>
         /// <param name="count">Le nombre de candidats.</param>
         [HttpPost]
-        public ActionResult GenerateCandidacies(int count)
+        public ActionResult GenerateCandidacies(int count, int capacity)
         {
+            Capacity = capacity;
+
             // Crée un modèle
             var model = new CandidaciesModel
             {
@@ -80,8 +84,8 @@ namespace DecisionAid.Controllers
             // Remplit ce modèle
             for (int i = 1; i <= count; i++)
             {
-                AddStudent(model, "Etudiant " + i);
                 AddEstablishment(model, "Etablissement " + i);
+                AddStudent(model, "Etudiant " + i);
             }
 
             AddRandomPreferencies(model);
@@ -230,10 +234,11 @@ namespace DecisionAid.Controllers
             var matches = new MatchesModel 
             {
                 Candidacies = model,
-                Matches = new List<KeyValuePair<StudentModel, EstablishmentModel>>()
+                Matches = new List<KeyValuePair<EstablishmentModel, List<StudentModel>>>(),
+                IsStudentPriority = true
             };
 
-            while (matches.Matches.Count < model.Students.Count)
+            while (matches.Matches.Count < matches.Candidacies.Students.Count || (matches.Matches.Any(m => m.Value.Count < Capacity) && freeStudents.SelectMany(s => s.Preferencies).Any()))
             {
                 var propositions = new List<KeyValuePair<StudentModel, EstablishmentModel>>();
                 
@@ -246,44 +251,69 @@ namespace DecisionAid.Controllers
                     propositions.Add(new KeyValuePair<StudentModel, EstablishmentModel>(freeStudent, bestChoice));
                 }
 
-                // Chaque établissement choisit l'étudiant qui lui convient le mieux.
+                // Chaque établissement choisit l'étudiant qui lui convient le mieux
                 foreach (var establishment in model.Establishments)
                 {
-                    var bestOrder = -1;
+                    var bestOrders = new List<int>();
 
                     foreach (var proposition in propositions.Where(p => p.Value == establishment))
                     {
-                        var order = establishment.Preferencies.IndexOf(proposition.Key);
+                        var propositionOrder = establishment.Preferencies.IndexOf(proposition.Key);
 
-                        if (bestOrder == -1 || order < bestOrder)
+                        if (bestOrders.Count < Capacity || bestOrders.Any(b => b > propositionOrder))
                         {
-                            bestOrder = order;
+                            bestOrders.Add(propositionOrder);
                         }
                     }
 
-                    if (bestOrder != -1)
+                    if (bestOrders.Any())
                     {
-                        var bestStudent = establishment.Preferencies.ElementAt(bestOrder);
-
-                        // Vérifie qu'un étudiant précédemment choisi n'est pas moins bien classé
-                        if (matches.Matches.Any(m => m.Value == establishment))
+                        foreach (var bestOrder in bestOrders)
                         {
-                            var previousMatch = matches.Matches.First(m => m.Value == establishment);
-                            var previousBestOrder = establishment.Preferencies.IndexOf(previousMatch.Key);
+                            var bestStudent = establishment.Preferencies.ElementAt(bestOrder);
 
-                            if (bestOrder < previousBestOrder)
+                            // Vérifie qu'un étudiant précédemment choisi n'est pas moins bien classé
+                            if (matches.Matches.Any(m => m.Key == establishment && m.Value.Count >= Capacity))
                             {
-                                matches.Matches.Remove(previousMatch);
-                                freeStudents.Add(previousMatch.Key);
+                                var previousMatch = matches.Matches.First(m => m.Key == establishment);
+                                var worstMatch = new StudentModel();
+                                var newBestOrder = bestOrder;
 
-                                matches.Matches.Add(new KeyValuePair<StudentModel, EstablishmentModel>(bestStudent, establishment));
+                                foreach (var previousMatchElement in previousMatch.Value)
+                                {
+                                    var previousBestOrder = establishment.Preferencies.IndexOf(previousMatchElement);
+
+                                    if (newBestOrder < previousBestOrder)
+                                    {
+                                        newBestOrder = previousBestOrder;
+                                        worstMatch = previousMatchElement;
+                                    }
+                                }
+
+                                if (worstMatch.Id != default)
+                                {
+                                    previousMatch.Value.Remove(worstMatch);
+                                    freeStudents.Add(worstMatch);
+
+                                    matches.Matches.First(m => m.Key == establishment).Value.Add(bestStudent);
+                                }
+                            }
+                            else if (matches.Matches.SelectMany(m => m.Value.Where(v => v.Id == bestStudent.Id)).Count() < Capacity)
+                            {
+                                if (matches.Matches.Any(m => m.Key == establishment))
+                                {
+                                    matches.Matches.First(m => m.Key == establishment).Value.Add(bestStudent);
+                                }
+                                else
+                                {
+                                    matches.Matches.Add(new KeyValuePair<EstablishmentModel, List<StudentModel>>(establishment, new List<StudentModel> { bestStudent }));
+                                }
+                            }
+
+                            if (matches.Matches.Where(m => m.Value.Contains(bestStudent)).Count() >= Capacity)
+                            {
                                 freeStudents.Remove(bestStudent);
                             }
-                        } 
-                        else
-                        {
-                            matches.Matches.Add(new KeyValuePair<StudentModel, EstablishmentModel>(bestStudent, establishment));
-                            freeStudents.Remove(bestStudent);
                         }
                     }
                 }
@@ -305,10 +335,10 @@ namespace DecisionAid.Controllers
             var matches = new MatchesModel
             {
                 Candidacies = model,
-                Matches = new List<KeyValuePair<StudentModel, EstablishmentModel>>()
+                Matches = new List<KeyValuePair<EstablishmentModel, List<StudentModel>>>()
             };
 
-            while (matches.Matches.Count < model.Establishments.Count)
+            while (matches.Matches.Count < matches.Candidacies.Establishments.Count || (matches.Matches.Any(m => m.Value.Count < Capacity) && freeEstablishments.SelectMany(s => s.Preferencies).Any()))
             {
                 var propositions = new List<KeyValuePair<StudentModel, EstablishmentModel>>();
 
@@ -322,40 +352,70 @@ namespace DecisionAid.Controllers
 
                 foreach (var student in model.Students)
                 {
-                    var bestOrder = -1;
+                    var bestOrders = new List<int>();
 
                     foreach (var proposition in propositions.Where(p => p.Key == student))
                     {
-                        var order = student.Preferencies.IndexOf(proposition.Value);
+                        var propositionOrder = student.Preferencies.IndexOf(proposition.Value);
 
-                        if (bestOrder == -1 || order < bestOrder)
+                        if (bestOrders.Count < Capacity || bestOrders.Any(b => b > propositionOrder))
                         {
-                            bestOrder = order;
+                            bestOrders.Add(propositionOrder);
                         }
                     }
 
-                    if (bestOrder != -1)
+                    if (bestOrders.Any())
                     {
-                        var bestEstablishment = student.Preferencies.ElementAt(bestOrder);
-
-                        if (matches.Matches.Any(m => m.Key == student))
+                        foreach (var bestOrder in bestOrders)
                         {
-                            var previousMatch = matches.Matches.First(m => m.Key == student);
-                            var previousBestOrder = student.Preferencies.IndexOf(previousMatch.Value);
+                            var bestEstablishment = student.Preferencies.ElementAt(bestOrder);
 
-                            if (bestOrder < previousBestOrder)
+                            if (matches.Matches.Any(m => m.Key.Id == bestEstablishment.Id && m.Value.Count >= Capacity))
                             {
-                                matches.Matches.Remove(previousMatch);
-                                freeEstablishments.Add(previousMatch.Value);
+                                var previousMatch = matches.Matches.First(m => m.Key.Id == bestEstablishment.Id);
+                                var worstMatch = new StudentModel();
 
-                                matches.Matches.Add(new KeyValuePair<StudentModel, EstablishmentModel>(student, bestEstablishment));
+                                foreach (var previousMatchElement in previousMatch.Value)
+                                {
+                                    var previousBestOrder = bestEstablishment.Preferencies.IndexOf(previousMatchElement);
+                                    var newBestOrder = bestOrder;
+
+                                    if (newBestOrder < previousBestOrder)
+                                    {
+                                        newBestOrder = previousBestOrder;
+                                        worstMatch = previousMatchElement;
+                                    }
+                                }
+
+                                if (worstMatch.Id != default)
+                                {
+                                    var previousBestOrder = bestEstablishment.Preferencies.Select(p => p.Id).ToList().IndexOf(worstMatch.Id);
+
+                                    if (bestOrder < previousBestOrder)
+                                    {
+                                        matches.Matches.Remove(previousMatch);
+                                        freeEstablishments.Add(previousMatch.Key);
+
+                                        matches.Matches.Add(new KeyValuePair<EstablishmentModel, List<StudentModel>>(bestEstablishment, new List<StudentModel> { student }));
+                                    }
+                                }
+                            }
+                            else if (matches.Matches.SelectMany(m => m.Value).Where(v => v.Id == student.Id).Count() < Capacity)
+                            {
+                                if (matches.Matches.Any(m => m.Key.Id == bestEstablishment.Id))
+                                {
+                                    matches.Matches.First(m => m.Key.Id == bestEstablishment.Id).Value.Add(student);
+                                }
+                                else
+                                {
+                                    matches.Matches.Add(new KeyValuePair<EstablishmentModel, List<StudentModel>>(bestEstablishment, new List<StudentModel> { student }));
+                                }
+                            }
+
+                            if (matches.Matches.First(m => m.Key == bestEstablishment).Value.Count >= Capacity)
+                            {
                                 freeEstablishments.Remove(bestEstablishment);
                             }
-                        }
-                        else
-                        {
-                            matches.Matches.Add(new KeyValuePair<StudentModel, EstablishmentModel>(student, bestEstablishment));
-                            freeEstablishments.Remove(bestEstablishment);
                         }
                     }
                 }
@@ -374,13 +434,28 @@ namespace DecisionAid.Controllers
             var maxCounter = model.Matches.Count;
             var sum = 0m;
 
-            foreach (var match in model.Matches)
+            foreach (var student in model.Candidacies.Students)
             {
-                var student = model.Candidacies.Students.FirstOrDefault(s => s.Id == match.Key.Id);
-                var establishment = model.Candidacies.Establishments.FirstOrDefault(s => s.Id == match.Value.Id);
+                var chosenEstablishments = model.Matches.Where(m => m.Value.Any(v => v.Id == student.Id)).Select(m => m.Key).ToList();
+                var bestChoice = -1;
 
-                decimal order = student.Preferencies.Select(p => p.Id).ToList().IndexOf(establishment.Id);
-                decimal moins = maxCounter - order;
+                foreach (var chosenEstablishment in chosenEstablishments)
+                {
+                    var newChoice = student.Preferencies.IndexOf(chosenEstablishment);
+
+                    if (bestChoice == -1 || newChoice < bestChoice)
+                    {
+                        bestChoice = newChoice;
+                    }
+                }
+
+                if (bestChoice == -1)
+                {
+                    model.StudentSatisfactions.Add(new KeyValuePair<string, decimal>(student.Name, 0));
+                    continue;
+                }
+
+                decimal moins = maxCounter - bestChoice;
                 decimal divise = moins / maxCounter;
                 decimal pourcent = divise * 100;
 
@@ -403,13 +478,28 @@ namespace DecisionAid.Controllers
             var maxCounter = model.Matches.Count;
             var sum = 0m;
 
-            foreach (var match in model.Matches)
+            foreach (var establishment in model.Candidacies.Establishments)
             {
-                var student = model.Candidacies.Students.FirstOrDefault(s => s.Id == match.Key.Id);
-                var establishment = model.Candidacies.Establishments.FirstOrDefault(s => s.Id == match.Value.Id);
+                var chosenStudents = model.Matches.Where(m => m.Key.Id == establishment.Id).SelectMany(m => m.Value).ToList();
+                var bestChoice = -1;
 
-                decimal order = establishment.Preferencies.Select(p => p.Id).ToList().IndexOf(student.Id);
-                decimal moins = maxCounter - order;
+                foreach (var chosenStudent in chosenStudents)
+                {
+                    var newChoice = establishment.Preferencies.IndexOf(chosenStudent);
+
+                    if (bestChoice == -1 || newChoice < bestChoice)
+                    {
+                        bestChoice = newChoice;
+                    }
+                }
+
+                if (bestChoice == -1)
+                {
+                    model.EstablishmentSatisfactions.Add(new KeyValuePair<string, decimal>(establishment.Name, 0));
+                    continue;
+                }
+
+                decimal moins = maxCounter - bestChoice;
                 decimal divise = moins / maxCounter;
                 decimal pourcent = divise * 100;
 

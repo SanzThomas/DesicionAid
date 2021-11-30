@@ -71,15 +71,15 @@
         <table class="table table-bordered">
             <caption>Affectations</caption>
             <tr>
-                <th>Etudiants</th>
                 <th>Etablissements</th>
+                <th>Etudiants</th>
             </tr>
 
             @foreach (var pair in Model.Matches)
             {
                 <tr>
                     <td nowrap>@pair.Key.Name</td>
-                    <td nowrap>@pair.Value.Name</td>
+                    <td nowrap>@string.Join(", ", pair.Value.Select(v => v.Name))</td>
                 </tr>
             }
 
